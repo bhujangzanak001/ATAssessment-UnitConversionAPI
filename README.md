@@ -101,16 +101,39 @@ dotnet run
 The app will start on a local development endpoint, commonly:
 
 ```text
-http://localhost:5000
+http://localhost:5002
 ```
 
 Swagger UI is enabled in Development mode, so you can open:
 
 ```text
-http://localhost:5000/swagger
+http://localhost:5002/swagger/
 ```
 
 to test the endpoints through the browser-based Swagger interface.
+
+## Validation performed
+
+The following conversion checks were executed against the running local API and returned the expected values:
+
+```text
+Length meter -> foot: 32.80839895013123
+Length kilometer -> mile: 3.1068559611866697
+Temperature celsius -> fahrenheit: 77
+Temperature fahrenheit -> celsius: 25
+Weight kg -> pound: 4.409245243697551
+Weight pound -> kg: 1.9999998894606503
+Area square_meter -> square_foot: 107.63910416709722
+Volume liter -> gallon_us: 1.3208602617907421
+Time hour -> minute: 120
+Speed mile_per_hour -> meter_per_second: 26.8224
+Pressure bar -> psi: 29.007547546043366
+Energy kilojoule -> calorie: 239.0057361376673
+Power kilowatt -> watt: 3000
+Data megabyte -> kilobyte: 2048
+```
+
+These results confirm that the API’s conversion engine is working for all supported categories in the current configuration.
 
 ## Design decisions and tradeoffs
 
