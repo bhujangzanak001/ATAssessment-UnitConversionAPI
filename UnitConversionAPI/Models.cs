@@ -29,4 +29,16 @@ public class UnitCategoryConfiguration
     public string? Formula { get; set; }
 }
 
+public class AddCategoryRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public UnitCategoryConfiguration Configuration { get; set; } = new();
+}
+
+public class AddUnitRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public double Factor { get; set; }
+}
+
 

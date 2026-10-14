@@ -1,36 +1,41 @@
 # Unit Conversion API
 
-A configurable ASP.NET Core 10 Web API for converting values across measurement categories such as length, temperature, and weight/mass.
+This project implements a configurable unit conversion API using ASP.NET Core 10. It allows callers to convert numeric values between units in categories such as length, temperature, weight, area, volume, speed, time, and more.
 
-## Features
-- REST API for conversion requests
-- Configurable units and conversion formulas through JSON
-- Support for multiple categories and units without code changes
-- Dependency injection with a clean service interface and controller design
+## Solution overview
 
-## Run locally
+The application follows a clean layered design:
 
-```bash
-dotnet restore
-cd UnitConversionAPI
-dotnet run
-```
+- Controller layer handles HTTP requests
+- Service layer contains conversion logic
+- Configuration file drives supported categories and units
+- Dependency injection keeps the app extensible and testable
 
-The API will run on a local HTTP endpoint, typically:
+This design fits the interview requirement to support an arbitrary number of units and categories without changing application code for each new conversion.
 
-```text
-http://localhost:5000
-```
+## Supported categories
 
-## Example requests
+The conversion catalog is defined in [UnitConversionAPI/ConversionConfigs.json](UnitConversionAPI/ConversionConfigs.json). The current configuration includes categories such as:
 
-### GET conversion
+- Length
+- Temperature
+- Weight
+- Area
+- Volume
+- Time
+- Speed
+- Pressure
+- Energy
+- Power
+- Data
+
+## API contract
+
+### Conversion endpoints
 
 ```http
 GET /api/unitconversion/convert?category=Length&fromUnit=meter&toUnit=feet&value=10
 ```
-
-### POST conversion
 
 ```http
 POST /api/unitconversion/convert
@@ -44,15 +49,91 @@ Content-Type: application/json
 }
 ```
 
-## Supported categories
+### Configuration management endpoints
 
-The configuration file is in `UnitConversionAPI/ConversionConfigs.json` and supports custom categories and conversion rules.
+```http
+GET /api/unitconversion/config
+```
 
-Example categories included:
-- Length
-- Temperature
-- Weight
+```http
+POST /api/unitconversion/config/categories
+Content-Type: application/json
+
+{
+  "name": "Area",
+  "configuration": {
+    "units": {
+      "square_meter": 1,
+      "square_foot": 0.09290304
+    }
+  }
+}
+```
+
+```http
+POST /api/unitconversion/config/categories/Area/units
+Content-Type: application/json
+
+{
+  "name": "square_yard",
+  "factor": 0.83612736
+}
+```
+
+```http
+DELETE /api/unitconversion/config/categories/Area
+```
+
+```http
+DELETE /api/unitconversion/config/categories/Area/units/square_yard
+```
+
+## Local run instructions
+
+From the repo root:
+
+```bash
+dotnet restore
+cd UnitConversionAPI
+dotnet run
+```
+
+The app will start on a local development endpoint, commonly:
+
+```text
+http://localhost:5000
+```
+
+Swagger UI is enabled in Development mode, so you can open:
+
+```text
+http://localhost:5000/swagger
+```
+
+to test the endpoints through the browser-based Swagger interface.
+
+## Design decisions and tradeoffs
+
+### 1. Configuration-first design
+The conversion rules are loaded from JSON instead of hardcoding them in C#. This keeps the solution flexible and makes it easy to add new units without a code deployment.
+
+Tradeoff: this is extremely flexible, but it depends on valid configuration data being present and consistent.
+
+### 2. Interface-based service layer
+A dedicated service interface and implementation are used for conversion logic. This makes the application easier to test and easier to extend.
+
+Tradeoff: a bit more structure than a single controller method, but much cleaner for larger systems.
+
+### 3. Formula support for non-linear conversions
+Temperature conversions, such as Celsius/Fahrenheit, are handled with configurable formulas. This is more expressive than a simple unit multiplier and supports cases where the relationship is not a direct ratio.
+
+Tradeoff: formula parsing is intentionally simple and safe for interview/demo scenarios, not a full expression engine.
+
+### 4. Local-first development setup
+The app is built for local execution and uses a simple JSON-driven configuration rather than a database or external service.
+
+Tradeoff: it is perfect for a coding interview and local demos, but not yet optimized for enterprise-scale multi-tenant configuration management.
 
 ## Notes
 
-This API is intentionally designed so new categories and units can be added by updating the conversion config file instead of changing application code.
+This implementation is intentionally lightweight and pragmatic: it satisfies the conversion challenge while staying easy to explain, run locally, and extend in a real interview or demo scenario.

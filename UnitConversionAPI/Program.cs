@@ -3,7 +3,6 @@ using UnitConversionAPI;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton(sp =>
@@ -23,6 +22,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 }
 
 app.MapControllers();

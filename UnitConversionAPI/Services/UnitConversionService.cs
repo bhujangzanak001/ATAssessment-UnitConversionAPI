@@ -1,12 +1,20 @@
+using System.Text.Json;
+
 namespace UnitConversionAPI;
 
 public class UnitConversionService : IUnitConversionService
 {
     private readonly UnitConversionConfiguration _configuration;
+    private readonly string _configPath;
 
     public UnitConversionService(UnitConversionConfiguration configuration)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _configPath = Path.Combine(AppContext.BaseDirectory, "ConversionConfigs.json");
+        if (!File.Exists(_configPath))
+        {
+            _configPath = Path.Combine(Directory.GetCurrentDirectory(), "ConversionConfigs.json");
+        }
     }
 
     public ConversionResponse Convert(ConversionRequest request)
@@ -26,6 +34,97 @@ public class UnitConversionService : IUnitConversionService
             Category = request.Category,
             ConvertedValue = convertedValue
         };
+    }
+
+    public UnitConversionConfiguration GetConfiguration()
+    {
+        return _configuration;
+    }
+
+    public void AddOrUpdateCategory(string categoryName, UnitCategoryConfiguration configuration)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            throw new ArgumentException("Category name is required.", nameof(categoryName));
+        }
+
+        if (configuration is null)
+        {
+            throw new ArgumentNullException(nameof(configuration));
+        }
+
+        _configuration.Categories[categoryName.Trim()] = configuration;
+        SaveConfiguration();
+    }
+
+    public void DeleteCategory(string categoryName)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            throw new ArgumentException("Category name is required.", nameof(categoryName));
+        }
+
+        _configuration.Categories.Remove(categoryName.Trim());
+        SaveConfiguration();
+    }
+
+    public void AddOrUpdateUnit(string categoryName, string unitName, double factor)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            throw new ArgumentException("Category name is required.", nameof(categoryName));
+        }
+
+        if (string.IsNullOrWhiteSpace(unitName))
+        {
+            throw new ArgumentException("Unit name is required.", nameof(unitName));
+        }
+
+        if (!_configuration.Categories.TryGetValue(categoryName.Trim(), out var categoryConfig))
+        {
+            throw new ArgumentException($"Category '{categoryName}' is not configured.", nameof(categoryName));
+        }
+
+        categoryConfig.Units[unitName.Trim()] = factor;
+        SaveConfiguration();
+    }
+
+    public void DeleteUnit(string categoryName, string unitName)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            throw new ArgumentException("Category name is required.", nameof(categoryName));
+        }
+
+        if (string.IsNullOrWhiteSpace(unitName))
+        {
+            throw new ArgumentException("Unit name is required.", nameof(unitName));
+        }
+
+        if (!_configuration.Categories.TryGetValue(categoryName.Trim(), out var categoryConfig))
+        {
+            throw new ArgumentException($"Category '{categoryName}' is not configured.", nameof(categoryName));
+        }
+
+        categoryConfig.Units.Remove(unitName.Trim());
+        SaveConfiguration();
+    }
+
+    public void SaveConfiguration()
+    {
+        var directory = Path.GetDirectoryName(_configPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        var json = JsonSerializer.Serialize(_configuration, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
+        File.WriteAllText(_configPath, json);
     }
 
     public double Convert(double value, string category, string fromUnit, string toUnit)

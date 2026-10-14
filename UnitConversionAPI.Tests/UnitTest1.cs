@@ -25,7 +25,7 @@ public class UnitConversionServiceTests
                         ["celsius"] = 1.0,
                         ["fahrenheit"] = 0.5555555555555556
                     },
-                    Formula = "(value * 9 / 5) + 32"
+                    Formula = "value * 9 / 5 + 32"
                 },
                 ["Weight"] = new()
                 {
@@ -69,6 +69,16 @@ public class UnitConversionServiceTests
         var result = service.Convert(5, "Weight", "kg", "pound");
 
         Assert.Equal(11.023113109, result, 9);
+    }
+
+    [Fact]
+    public void Convert_WhenFahrenheitToCelsius_UsesReverseFormula()
+    {
+        var service = CreateService();
+
+        var result = service.Convert(77, "Temperature", "fahrenheit", "celsius");
+
+        Assert.Equal(25, result, 10);
     }
 
     [Fact]
