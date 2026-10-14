@@ -2,11 +2,18 @@ using System.Text.Json;
 
 namespace UnitConversionAPI;
 
+/// <summary>
+/// Concrete implementation of the conversion engine.
+/// It loads the runtime conversion catalog, applies conversion formulas, and persists updates back to disk.
+/// </summary>
 public class UnitConversionService : IUnitConversionService
 {
     private readonly UnitConversionConfiguration _configuration;
     private readonly string _configPath;
 
+    /// <summary>
+    /// Initialises the service with the configuration object injected by dependency injection.
+    /// </summary>
     public UnitConversionService(UnitConversionConfiguration configuration)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -17,6 +24,7 @@ public class UnitConversionService : IUnitConversionService
         }
     }
 
+    /// <inheritdoc />
     public ConversionResponse Convert(ConversionRequest request)
     {
         if (request is null)
@@ -36,11 +44,13 @@ public class UnitConversionService : IUnitConversionService
         };
     }
 
+    /// <inheritdoc />
     public UnitConversionConfiguration GetConfiguration()
     {
         return _configuration;
     }
 
+    /// <inheritdoc />
     public void AddOrUpdateCategory(string categoryName, UnitCategoryConfiguration configuration)
     {
         if (string.IsNullOrWhiteSpace(categoryName))
@@ -57,6 +67,7 @@ public class UnitConversionService : IUnitConversionService
         SaveConfiguration();
     }
 
+    /// <inheritdoc />
     public void DeleteCategory(string categoryName)
     {
         if (string.IsNullOrWhiteSpace(categoryName))
@@ -68,6 +79,7 @@ public class UnitConversionService : IUnitConversionService
         SaveConfiguration();
     }
 
+    /// <inheritdoc />
     public void AddOrUpdateUnit(string categoryName, string unitName, double factor)
     {
         if (string.IsNullOrWhiteSpace(categoryName))
@@ -89,6 +101,7 @@ public class UnitConversionService : IUnitConversionService
         SaveConfiguration();
     }
 
+    /// <inheritdoc />
     public void DeleteUnit(string categoryName, string unitName)
     {
         if (string.IsNullOrWhiteSpace(categoryName))
@@ -110,6 +123,7 @@ public class UnitConversionService : IUnitConversionService
         SaveConfiguration();
     }
 
+    /// <inheritdoc />
     public void SaveConfiguration()
     {
         var directory = Path.GetDirectoryName(_configPath);
@@ -127,6 +141,7 @@ public class UnitConversionService : IUnitConversionService
         File.WriteAllText(_configPath, json);
     }
 
+    /// <inheritdoc />
     public double Convert(double value, string category, string fromUnit, string toUnit)
     {
         if (string.IsNullOrWhiteSpace(category))
@@ -199,6 +214,10 @@ public class UnitConversionService : IUnitConversionService
         throw new ArgumentException($"No conversion is configured for '{category}' from '{fromUnit}' to '{toUnit}'.");
     }
 
+    /// <summary>
+    /// Evaluates a formula against the provided input value using a small expression parser.
+    /// This keeps conversion logic extensible without depending on a heavy expression engine.
+    /// </summary>
     private static double EvaluateFormula(string formula, double value)
     {
         if (string.IsNullOrWhiteSpace(formula))
@@ -285,6 +304,10 @@ public class UnitConversionService : IUnitConversionService
         return result;
     }
 
+    /// <summary>
+    /// Parses a string formula into tokens that can be evaluated safely.
+    /// Supported inputs include numbers, arithmetic operators, parentheses and the special variable value.
+    /// </summary>
     private static List<Token> Tokenize(string expression, double value)
     {
         var tokens = new List<Token>();
@@ -347,11 +370,17 @@ public class UnitConversionService : IUnitConversionService
         return tokens;
     }
 
+    /// <summary>
+    /// Normalises a unit or category string before lookup to avoid case-sensitivity issues.
+    /// </summary>
     private static string NormalizeKey(string value)
     {
         return value.Trim();
     }
 
+    /// <summary>
+    /// Internal token representation used by the expression parser.
+    /// </summary>
     private sealed class Token
     {
         public Token(TokenType type, string value, double numericValue)
@@ -366,6 +395,9 @@ public class UnitConversionService : IUnitConversionService
         public double NumericValue { get; }
     }
 
+    /// <summary>
+    /// Supported token categories used when parsing conversion formulas.
+    /// </summary>
     private enum TokenType
     {
         Number,
